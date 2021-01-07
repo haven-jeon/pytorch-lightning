@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from contextlib import suppress
 from typing import Optional
 
 import torch
@@ -20,8 +21,11 @@ from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.plugins.ddp_plugin import DDPPlugin
 from pytorch_lightning.utilities import RPC_AVAILABLE
 
+DEFAULT_RPC_TIMEOUT_SEC = 60.
 if RPC_AVAILABLE:
     from torch.distributed import rpc
+    with suppress(ModuleNotFoundError, ImportError):
+        from torch.distributed.rpc.constants import DEFAULT_RPC_TIMEOUT_SEC
 
 
 class RPCPlugin(DDPPlugin):
@@ -33,7 +37,8 @@ class RPCPlugin(DDPPlugin):
     that need to be addressed when using RPC communication when building custom RPC Plugins.
     """
 
-    def __init__(self, rpc_timeout_sec: float = rpc.constants.DEFAULT_RPC_TIMEOUT_SEC, **kwargs):
+    def __init__(self, rpc_timeout_sec: float = DEFAULT_RPC_TIMEOUT_SEC, **kwargs):
+        self.rpc_timeout_sec = rpc_timeout_sec
         self.rpc_initialized = False
         self.rpc_timeout_sec = rpc_timeout_sec
         super().__init__(**kwargs)
