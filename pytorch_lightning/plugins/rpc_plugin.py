@@ -47,7 +47,7 @@ class RPCPlugin(DDPPlugin):
                             global_rank: int,
                             world_size: int) -> None:
         os.environ['MASTER_PORT'] = os.getenv('RPC_MASTER_PORT', '15000')
-        rpc.init_rpc(f"worker{global_rank}", backend=rpc.BackendType.PROCESS_GROUP, rank=global_rank, world_size=world_size)
+        rpc.init_rpc(f"worker{global_rank}", rank=global_rank, world_size=world_size)
         rpc._set_rpc_timeout(self.rpc_timeout_sec)
         self.rpc_initialized = True
 
