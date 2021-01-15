@@ -641,7 +641,13 @@ class ModelCheckpoint(Callback):
                 f"Epoch {epoch:d}, global step {step:d}: {self.monitor} reached {current:0.5f}"
                 f' (best {self.best_model_score:0.5f}), saving model to "{filepath}" as top {k}'
             )
-        self._save_model(filepath, trainer, pl_module)
+        accelerator_backend = trainer.accelerator_backend
+
+        if accelerator_backend is not None and accelerator_backend.rpc_enabled:
+            # RPCPlugin manages saving all model states
+            accelerator_backend.ddp_plugin.rpc_save_model(self._save_model, filepath, trainer, pl_module)
+        else:
+            self._save_model(filepath, trainer, pl_module)
 
         if del_filepath is not None and filepath != del_filepath:
             self._del_model(del_filepath)

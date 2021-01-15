@@ -35,6 +35,7 @@ if APEX_AVAILABLE:
 if OMEGACONF_AVAILABLE:
     from omegaconf import Container
 
+from pytorch_lightning.plugins.ddp_sequential_plugin import LightningPipeModule
 
 class CheckpointConnector:
 
@@ -116,7 +117,11 @@ class CheckpointConnector:
         model.on_load_checkpoint(checkpoint)
 
         # restore model state_dict
-        model.load_state_dict(checkpoint['state_dict'])
+        # need fix for piped model parallel
+        if hasattr(model, "sequential_module") and isinstance(model.sequential_module, LightningPipeModule):
+            rank_zero_warn('plz model loading using MyLightningModule.load_from_checkpoint()')
+        else:
+            model.load_state_dict(checkpoint['state_dict'])
 
     def restore_training_state(self, checkpoint):
         """
